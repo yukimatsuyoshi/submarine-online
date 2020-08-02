@@ -6,3 +6,4 @@
 
 ## その他リンク
 - 完成品: https://murmuring-shelf-77610.herokuapp.com
+- 潜水艦の画像: https://github.com/progedu/submarine-online/blob/master/public/images/submarine.png 
