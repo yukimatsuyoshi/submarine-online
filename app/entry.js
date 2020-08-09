@@ -132,7 +132,7 @@ function drawMap(gameObj) {
   }
 }
 
-function calculationBetweenTwoPoints(pX, pY, oX, oY, gameWidth, gameHight, raderCanvasWidth, raderCanvasHeight) {
+function calculationBetweenTwoPoints(pX, pY, oX, oY, gameWidth, gameHeight, raderCanvasWidth, raderCanvasHeight) {
   let distanceX = 99999999;
   let distanceY = 99999999;
   let drawX = null;
@@ -196,7 +196,7 @@ function calculationBetweenTwoPoints(pX, pY, oX, oY, gameWidth, gameHight, rader
 }
 
 function calcTwoPointsDegree(x1, y1, x2, y2) {
-  const redian = Math.atan2(y2 - y1, x2 - x1);
+  const radian = Math.atan2(y2 - y1, x2 - x1);
   const degree = radian * 180 / Math.PI + 180;
   return degree;
 }

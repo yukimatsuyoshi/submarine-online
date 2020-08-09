@@ -5747,6 +5747,8 @@ module.exports = function(obj, fn){
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _jquery = __webpack_require__(26);
 
 var _jquery2 = _interopRequireDefault(_jquery);
@@ -5798,8 +5800,11 @@ function init() {
 init();
 
 function ticker() {
+  if (!gameObj.myPlayerObj || !gameObj.playersMap) return;
+
   gameObj.ctxRader.clearRect(0, 0, gameObj.raderCanvasWidth, gameObj.raderCanvasHeight); // まっさら
   drawRadar(gameObj.ctxRader);
+  drawMap(gameObj);
   drawSubmarine(gameObj.ctxRader);
 }
 
@@ -5835,6 +5840,177 @@ function drawSubmarine(ctxRader) {
   ctxRader.restore();
 }
 
+function drawMap(gameObj) {
+
+  // アイテムの描画
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = gameObj.itemsMap[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var _ref = _step.value;
+
+      var _ref2 = _slicedToArray(_ref, 2);
+
+      var index = _ref2[0];
+      var item = _ref2[1];
+
+
+      var distanceObj = calculationBetweenTwoPoints(gameObj.myPlayerObj.x, gameObj.myPlayerObj.y, item.x, item.y, gameObj.fieldWidth, gameObj.fieldHeight, gameObj.raderCanvasWidth, gameObj.raderCanvasHeight);
+
+      if (distanceObj.distanceX <= gameObj.raderCanvasWidth / 2 && distanceObj.distanceY <= gameObj.raderCanvasHeight / 2) {
+
+        var degreeDiff = calcDegreeDiffFromRadar(gameObj.deg, distanceObj.degree);
+        var toumeido = calcOpacity(degreeDiff);
+
+        gameObj.ctxRader.fillStyle = 'rgba(255, 165, 0, ' + toumeido + ')';
+        gameObj.ctxRader.beginPath();
+        gameObj.ctxRader.arc(distanceObj.drawX, distanceObj.drawY, gameObj.itemRadius, 0, Math.PI * 2, true);
+        gameObj.ctxRader.fill();
+      }
+    }
+
+    // 空気の描画
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = gameObj.airMap[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var _ref3 = _step2.value;
+
+      var _ref4 = _slicedToArray(_ref3, 2);
+
+      var airKey = _ref4[0];
+      var airObj = _ref4[1];
+
+
+      var distanceObj = calculationBetweenTwoPoints(gameObj.myPlayerObj.x, gameObj.myPlayerObj.y, airObj.x, airObj.y, gameObj.fieldWidth, gameObj.fieldHeight, gameObj.raderCanvasWidth, gameObj.raderCanvasHeight);
+
+      if (distanceObj.distanceX <= gameObj.raderCanvasWidth / 2 && distanceObj.distanceY <= gameObj.raderCanvasHeight / 2) {
+
+        var _degreeDiff = calcDegreeDiffFromRadar(gameObj.deg, distanceObj.degree);
+        var _toumeido = calcOpacity(_degreeDiff);
+
+        gameObj.ctxRader.fillStyle = 'rgb(0, 220, 255, ' + _toumeido + ')';
+        gameObj.ctxRader.beginPath();
+        gameObj.ctxRader.arc(distanceObj.drawX, distanceObj.drawY, gameObj.airRadius, 0, Math.PI * 2, true);
+        gameObj.ctxRader.fill();
+      }
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+}
+
+function calculationBetweenTwoPoints(pX, pY, oX, oY, gameWidth, gameHeight, raderCanvasWidth, raderCanvasHeight) {
+  var distanceX = 99999999;
+  var distanceY = 99999999;
+  var drawX = null;
+  var drawY = null;
+
+  if (pX <= oX) {
+    // 右から
+    distanceX = oX - pX;
+    drawX = raderCanvasWidth / 2 + distanceX;
+    // 左から
+    var tmpDistance = pX + gameWidth - oX;
+    if (distanceX > tmpDistance) {
+      distanceX = tmpDistance;
+      drawX = raderCanvasWidth / 2 - distanceX;
+    }
+  } else {
+    // 右から
+    distanceX = pX - oX;
+    drawX = raderCanvasWidth / 2 - distanceX;
+    // 左から
+    var _tmpDistance = oX + gameWidth - pX;
+    if (distanceX > _tmpDistance) {
+      distanceX = _tmpDistance;
+      drawX = raderCanvasWidth / 2 + distanceX;
+    }
+  }
+
+  if (pY <= oY) {
+    // 下から
+    distanceY = oY - pY;
+    drawY = raderCanvasHeight / 2 + distanceY;
+    // 上から
+    var _tmpDistance2 = pY + gameHeight - oY;
+    if (distanceY > _tmpDistance2) {
+      distanceY = _tmpDistance2;
+      drawY = raderCanvasHeight / 2 - distanceY;
+    }
+  } else {
+    // 上から
+    distanceY = pY - oY;
+    drawY = raderCanvasHeight / 2 - distanceY;
+    // 下から
+    var _tmpDistance3 = oY + gameHeight - pY;
+    if (distanceY > _tmpDistance3) {
+      distanceY = _tmpDistance3;
+      drawY = raderCanvasHeight / 2 + distanceY;
+    }
+  }
+
+  var degree = calcTwoPointsDegree(drawX, drawY, raderCanvasWidth / 2, raderCanvasHeight / 2);
+
+  return {
+    distanceX: distanceX,
+    distanceY: distanceY,
+    drawX: drawX,
+    drawY: drawY,
+    degree: degree
+  };
+}
+
+function calcTwoPointsDegree(x1, y1, x2, y2) {
+  var radian = Math.atan2(y2 - y1, x2 - x1);
+  var degree = radian * 180 / Math.PI + 180;
+  return degree;
+}
+
+function calcDegreeDiffFromRadar(degRader, degItem) {
+  var diff = degRader - degItem;
+  if (diff < 0) {
+    diff += 360;
+  }
+  return diff;
+}
+
+function calcOpacity(degreeDiff) {
+  var deleteDeg = 270;
+  degreeDiff = degreeDiff > deleteDeg ? deleteDeg : degreeDiff;
+  return (1 - degreeDiff / deleteDeg).toFixed(2);
+}
+
 socket.on('start data', function (startObj) {
   gameObj.fieldWidth = startObj.fieldWidth;
   gameObj.fieldHeight = startObj.fieldHeight;
@@ -5848,13 +6024,13 @@ socket.on('map data', function (compressed) {
   var airArray = compressed[2];
 
   gameObj.playersMap = new Map();
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
 
   try {
-    for (var _iterator = playersArray[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var compressedPlayerData = _step.value;
+    for (var _iterator3 = playersArray[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var compressedPlayerData = _step3.value;
 
 
       var player = {};
@@ -5878,16 +6054,16 @@ socket.on('map data', function (compressed) {
       }
     }
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion && _iterator.return) {
-        _iterator.return();
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
       }
     } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
+      if (_didIteratorError3) {
+        throw _iteratorError3;
       }
     }
   }
