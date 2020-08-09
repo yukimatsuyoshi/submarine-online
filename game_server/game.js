@@ -51,16 +51,16 @@ function getMapData() {
   const itemsArray = [];
   const airArray = [];
 
-  for (let [socketId, plyer] of gameObj.playersMap) {
+  for (let [socketId, player] of gameObj.playersMap) {
     const playerDataForSend = [];
 
-    playerDataForSend.push(plyer.x);
-    playerDataForSend.push(plyer.y);
-    playerDataForSend.push(plyer.playerId);
-    playerDataForSend.push(plyer.displayName);
-    playerDataForSend.push(plyer.score);
-    playerDataForSend.push(plyer.isAlive);
-    playerDataForSend.push(plyer.direction);
+    playerDataForSend.push(player.x);
+    playerDataForSend.push(player.y);
+    playerDataForSend.push(player.playerId);
+    playerDataForSend.push(player.displayName);
+    playerDataForSend.push(player.score);
+    playerDataForSend.push(player.isAlive);
+    playerDataForSend.push(player.direction);
 
     playersArray.push(playerDataForSend);
   }
