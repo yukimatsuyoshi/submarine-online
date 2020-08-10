@@ -8,3 +8,4 @@
 - 完成品: https://murmuring-shelf-77610.herokuapp.com
 - 潜水艦の画像: https://github.com/progedu/submarine-online/blob/master/public/images/submarine.png 
 - ミサイルの画像: https://github.com/progedu/submarine-online/blob/master/public/images/missile.png
+- 爆発のアニメーション: https://github.com/progedu/submarine-online/blob/master/public/images/bomlist.png
