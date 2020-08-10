@@ -5934,13 +5934,13 @@ function drawMap(gameObj) {
 
         if (enemyObj.displayName === 'anonymous') {
 
-          //gameObj.ctxRader.strokeStyle = `rgba(250, 250, 250, ${toumeido})`;
+          gameObj.ctxRader.strokeStyle = 'rgba(250, 250, 250, ' + toumeido + ')'; // 直線のスタイル
           gameObj.ctxRader.fillStyle = 'rgba(250, 250, 250, ' + toumeido + ')';
           gameObj.ctxRader.beginPath();
-          // gameObj.ctxRader.moveTo(distanceObj.drawX, distanceObj.drawY);
-          // gameObj.ctxRader.lineTo(distanceObj.drawX + 20, distanceObj.drawY - 20);
-          // gameObj.ctxRader.lineTo(distanceObj.drawX + 20 + 40, distanceObj.drawY - 20);
-          // gameObj.ctxRader.stroke();
+          gameObj.ctxRader.moveTo(distanceObj.drawX, distanceObj.drawY); // 直線の始点
+          gameObj.ctxRader.lineTo(distanceObj.drawX + 20, distanceObj.drawY - 20); // 直線の終点
+          gameObj.ctxRader.lineTo(distanceObj.drawX + 20 + 40, distanceObj.drawY - 20);
+          gameObj.ctxRader.stroke();
 
           gameObj.ctxRader.font = '8px Arial';
           gameObj.ctxRader.fillText('anonymous', distanceObj.drawX + 20, distanceObj.drawY - 20 - 1);
