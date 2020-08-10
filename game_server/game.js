@@ -8,7 +8,11 @@ const gameObj = {
   fieldWidth: 1000,
   fieldHeight: 1000,
   itemTotal: 15,
-  airTotal: 10
+  airTotal: 10,
+  itemRadius: 4,
+  airRadius: 5,
+  addAirTime: 30,
+  submarineImageWidth: 42
 };
 
 function init() {
@@ -23,6 +27,7 @@ init(); // 初期化（初期化はサーバー起動時に行う）
 
 const gameTicker = setInterval(() => {
   movePlayers(gameObj.playersMap);  // 潜水艦の移動
+  checkGetItem(gameObj.playersMap, gameObj.itemsMap, gameObj.airMap); // アイテムのチェック
 }, 33);
 
 function movePlayers(playersMap) {  // 潜水艦の移動
@@ -49,6 +54,67 @@ function movePlayers(playersMap) {  // 潜水艦の移動
     if (player.x < 0) player.x += gameObj.fieldWidth;
     if (player.y < 0) player.y += gameObj.fieldHeight;
     if (player.y > gameObj.fieldHeight) player.y -= gameObj.fieldHeight;
+
+    player.aliveTime.clock += 1;
+    if (player.aliveTime.clock === 30) {
+      player.aliveTime.clock = 0;
+      player.aliveTime.seconds += 1;
+      decreaseAir(player);
+      player.score += 1;
+    }
+  }
+}
+
+function decreaseAir(playerObj) {
+  playerObj.airTime -= 1;
+  if (playerObj.airTime === 0) {
+    playerObj.isAlive = false;
+  }
+}
+
+function checkGetItem(playersMap, itemsMap, airMap) {
+  for (let [hashKey, playerObj] of playersMap) {
+    if (playerObj.isAlive === false) continue;
+
+    // ミサイル（赤丸）
+    for (let [itemKey, itemObj] of itemsMap) {
+
+      const distanceObj = calculationBetweenTwoPoints(
+        playerObj.x, playerObj.y, itemObj.x, itemObj.y, gameObj.fieldWidth, gameObj.fieldHeight
+      );
+
+      if (
+        distanceObj.distanceX <= (gameObj.submarineImageWidth / 2 + gameObj.itemRadius) &&
+        distanceObj.distanceY <= (gameObj.submarineImageWidth / 2 + gameObj.itemRadius)
+      ) { // got item!
+
+        gameObj.itemsMap.delete(itemKey);
+        playerObj.missilesMany = playerObj.missilesMany > 5 ? 6 : playerObj.missilesMany + 1;
+        addItem();
+      }
+    }
+
+    // 空気（青丸）
+    for (let [airKey, airObj] of airMap) {
+
+      const distanceObj = calculationBetweenTwoPoints(
+        playerObj.x, playerObj.y, airObj.x, airObj.y, gameObj.fieldWidth, gameObj.fieldHeight
+      );
+
+      if (
+        distanceObj.distanceX <= (gameObj.submarineImageWidth / 2 + gameObj.airRadius) &&
+        distanceObj.distanceY <= (gameObj.submarineImageWidth / 2 + gameObj.airRadius)
+      ) { // got air!
+
+        gameObj.airMap.delete(airKey);
+        if (playerObj.airTime + gameObj.addAirTime > 99) {
+          playerObj.airTime = 99;
+        } else {
+          playerObj.airTime += gameObj.addAirTime;
+        }
+        addAir();
+      }
+    }
   }
 }
 
@@ -65,6 +131,9 @@ function newConnection(socketId, displayName, thumbUrl) {
     thumbUrl: thumbUrl,
     isAlive: true,
     direction: 'right',
+    missilesMany: 0,
+    airTime: 99,
+    aliveTime: { 'clock': 0, 'seconds': 0 },
     score: 0
   };
   gameObj.playersMap.set(socketId, playerObj);
@@ -92,7 +161,9 @@ function getMapData() {
     playerDataForSend.push(player.score);
     playerDataForSend.push(player.isAlive);
     playerDataForSend.push(player.direction);
-
+    playerDataForSend.push(player.missilesMany);
+    playerDataForSend.push(player.airTime);
+    
     playersArray.push(playerDataForSend);
   }
 
@@ -115,6 +186,11 @@ function getMapData() {
   }
 
   return [playersArray, itemsArray, airArray];
+}
+
+function updatePlayerDirection(socketId, direction) {
+  const playerObj = gameObj.playersMap.get(socketId);
+  playerObj.direction = direction;
 }
 
 function disconnect(socketId) {
@@ -153,8 +229,58 @@ function addAir() {
   gameObj.airMap.set(airKey, airObj);
 }
 
+
+function calculationBetweenTwoPoints(pX, pY, oX, oY, gameWidth, gameHeight) {
+  let distanceX = 99999999;
+  let distanceY = 99999999;
+
+  if (pX <= oX) {
+    // 右から
+    distanceX = oX - pX;
+    // 左から
+    let tmpDistance = pX + gameWidth - oX;
+    if (distanceX > tmpDistance) {
+      distanceX = tmpDistance;
+    }
+
+  } else {
+    // 右から
+    distanceX = pX - oX;
+    // 左から
+    let tmpDistance = oX + gameWidth - pX;
+    if (distanceX > tmpDistance) {
+      distanceX = tmpDistance;
+    }
+  }
+
+  if (pY <= oY) {
+    // 下から
+    distanceY = oY - pY;
+    // 上から
+    let tmpDistance = pY + gameHeight - oY;
+    if (distanceY > tmpDistance) {
+      distanceY = tmpDistance;
+    }
+
+  } else {
+    // 上から
+    distanceY = pY - oY;
+    // 下から
+    let tmpDistance = oY + gameHeight - pY;
+    if (distanceY > tmpDistance) {
+      distanceY = tmpDistance;
+    }
+  }
+
+  return {
+    distanceX,
+    distanceY
+  };
+}
+
 module.exports = {
   newConnection,
   getMapData,
+  updatePlayerDirection,
   disconnect
 };

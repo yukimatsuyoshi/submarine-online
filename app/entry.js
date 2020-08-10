@@ -10,6 +10,12 @@ const gameObj = {
     itemRadius: 4,
     airRadius: 5,
     deg: 0,
+    rotationDegreeByDirection: {
+      'left': 0,
+      'up': 270,
+      'down': 90,
+      'right': 0
+    },
     myDisplayName: $('#main').attr('data-displayName'),
     myThumbUrl: $('#main').attr('data-thumbUrl'),
     fieldWidth: null,
@@ -38,6 +44,10 @@ function init() {
     const submarineImage = new Image();
     submarineImage.src = '/images/submarine.png';
     gameObj.submarineImage = submarineImage;
+
+    // ミサイルのがぞう
+    gameObj.missileImage = new Image();
+    gameObj.missileImage.src = '/images/missile.png';
 }
 
 init();
@@ -48,7 +58,11 @@ function ticker() {
     gameObj.ctxRader.clearRect(0, 0, gameObj.raderCanvasWidth, gameObj.raderCanvasHeight); // まっさら
     drawRadar(gameObj.ctxRader);
     drawMap(gameObj);
-    drawSubmarine(gameObj.ctxRader);
+    drawSubmarine(gameObj.ctxRader, gameObj.myPlayerObj);
+
+    gameObj.ctxScore.clearRect(0, 0, gameObj.scoreCanvasWidth, gameObj.scoreCanvasHeight); // scoreCanvas もまっさら
+    drawAirTimer(gameObj.ctxScore, gameObj.myPlayerObj.airTime);
+    drawMissiles(gameObj.ctxScore, gameObj.myPlayerObj.missilesMany);
 }
 
 setInterval(ticker, 33);
@@ -75,14 +89,33 @@ function drawRadar(ctxRader) {
     gameObj.deg = (gameObj.deg + 5) % 360;
 }
 
-function drawSubmarine(ctxRader) {
+function drawSubmarine(ctxRader, myPlayerObj) {
+
+    const rotationDegree = gameObj.rotationDegreeByDirection[myPlayerObj.direction];
+
     ctxRader.save();
     ctxRader.translate(gameObj.raderCanvasWidth / 2, gameObj.raderCanvasHeight / 2);
+    ctxRader.rotate(getRadian(rotationDegree));
+    if (myPlayerObj.direction === 'left') {
+      ctxRader.scale(-1, 1);
+    }
   
     ctxRader.drawImage(
         gameObj.submarineImage, -(gameObj.submarineImage.width / 2), -(gameObj.submarineImage.height / 2)
     );
     ctxRader.restore();
+}
+
+function drawMissiles(ctxScore, missilesMany) {
+  for (let i = 0; i < missilesMany; i++) {
+    ctxScore.drawImage(gameObj.missileImage, 50 * i, 80);
+  }
+}
+
+function drawAirTimer(ctxScore, airTime) {
+  ctxScore.fillStyle = "rgb(0, 220, 250)";
+  ctxScore.font = 'bold 40px Arial';
+  ctxScore.fillText(airTime, 110, 50);
 }
 
 function drawMap(gameObj) {
@@ -238,6 +271,9 @@ socket.on('map data', (compressed) => {
     player.score = compressedPlayerData[4];
     player.isAlive = compressedPlayerData[5];
     player.direction = compressedPlayerData[6];
+    player.missilesMany = compressedPlayerData[7];
+    player.airTime = compressedPlayerData[8];
+
 
     gameObj.playersMap.set(player.playerId, player);
 
@@ -248,6 +284,8 @@ socket.on('map data', (compressed) => {
       gameObj.myPlayerObj.displayName = compressedPlayerData[3];
       gameObj.myPlayerObj.score = compressedPlayerData[4];
       gameObj.myPlayerObj.isAlive = compressedPlayerData[5];
+      gameObj.myPlayerObj.missilesMany = compressedPlayerData[7];
+      gameObj.myPlayerObj.airTime = compressedPlayerData[8];
     }
   }
 
@@ -270,4 +308,38 @@ function getRadian(kakudo) {
     return kakudo * Math.PI / 180
 }
 
+$(window).keydown(function(event) {
+  if (!gameObj.myPlayerObj || gameObj.myPlayerObj.isAlive === false) return;
+
+  switch (event.key) {
+    case 'ArrowLeft':
+      if (gameObj.myPlayerObj.direction === 'left') break; 
+      gameObj.myPlayerObj.direction = 'left';
+      drawSubmarine(gameObj.ctxRader, gameObj.myPlayerObj);
+      sendChangeDirection(socket, 'left');
+      break;
+    case 'ArrowUp':
+      if (gameObj.myPlayerObj.direction === 'up') break;
+      gameObj.myPlayerObj.direction = 'up';
+      drawSubmarine(gameObj.ctxRader, gameObj.myPlayerObj);
+      sendChangeDirection(socket, 'up');
+      break;
+    case 'ArrowDown':
+      if (gameObj.myPlayerObj.direction === 'down') break;
+      gameObj.myPlayerObj.direction = 'down';
+      drawSubmarine(gameObj.ctxRader, gameObj.myPlayerObj);
+      sendChangeDirection(socket, 'down');
+      break;
+    case 'ArrowRight':
+      if (gameObj.myPlayerObj.direction === 'right') break;
+      gameObj.myPlayerObj.direction = 'right';
+      drawSubmarine(gameObj.ctxRader, gameObj.myPlayerObj);
+      sendChangeDirection(socket, 'right');
+      break;
+  }
+});
+
+function sendChangeDirection(socket, direction) {
+  socket.emit('change direction', direction);
+}
 
