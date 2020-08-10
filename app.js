@@ -14,23 +14,23 @@ var indexRouter = require('./routes/index');
 var gameRouter = require('./routes/game');
 
 passport.use(new Strategy({
-  consumerKey: config.twitter.consumerKey,
-  consumerSecret: config.twitter.consumerSecret,
-  callbackURL: config.twitter.callbackURL
-},
-function(token, tokenSecret, profile, cb) {
-  process.nextTick(function () {
-    return cb(null, profile);
-  });
-})
+    consumerKey: config.twitter.consumerKey,
+    consumerSecret: config.twitter.consumerSecret,
+    callbackURL: config.twitter.callbackURL
+  },
+  function(token, tokenSecret, profile, cb) {
+    process.nextTick(function () {
+      return cb(null, profile);
+    });
+  })
 );
 
 passport.serializeUser(function(user, cb) {
-cb(null, user);
+  cb(null, user);
 });
 
 passport.deserializeUser(function(obj, cb) {
-cb(null, obj);
+  cb(null, obj);
 });
 
 var app = express();
