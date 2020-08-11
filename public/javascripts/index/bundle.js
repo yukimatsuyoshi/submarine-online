@@ -27017,6 +27017,8 @@ function ticker() {
   gameObj.ctxScore.clearRect(0, 0, gameObj.scoreCanvasWidth, gameObj.scoreCanvasHeight); // scoreCanvas もまっさら
   drawAirTimer(gameObj.ctxScore, gameObj.myPlayerObj.airTime);
   drawMissiles(gameObj.ctxScore, gameObj.myPlayerObj.missilesMany); // アイテム（赤丸）としてのミサイルの描画
+  drawScore(gameObj.ctxScore, gameObj.myPlayerObj.score);
+  drawRanking(gameObj.ctxScore, gameObj.playersMap);
 
   moveInClient(gameObj.myPlayerObj, gameObj.flyingMissilesMap); // 射出されたミサイルの描画
 
@@ -27101,6 +27103,34 @@ function drawAirTimer(ctxScore, airTime) {
   ctxScore.fillStyle = "rgb(0, 220, 250)";
   ctxScore.font = 'bold 40px Arial';
   ctxScore.fillText(airTime, 110, 50);
+}
+
+function drawScore(ctxScore, score) {
+  ctxScore.fillStyle = "rgb(26, 26, 26)";
+  ctxScore.font = '28px Arial';
+  ctxScore.fillText('score: ' + score, 10, 180);
+}
+
+function drawRanking(ctxScore, playersMap) {
+  var playersArray = [].concat(Array.from(playersMap)); // Arrayをsortした時に，Mapまでsortされないようにする
+  playersArray.sort(function (a, b) {
+    return b[l].score - a[l].score;
+  });
+
+  // ランキング表示の枠
+  ctxScore.fillStyle = "rgb(0, 0, 0)";
+  ctxScore.fillRect(0, 220, gameObj.scoreCanvasWidth, 3);
+
+  // ランキングの表示
+  ctxScore.fillStyle = "rgb(26, 26, 26)";
+  ctxScore.font = '20px Arial';
+
+  for (var i = 0; i < 10; i++) {
+    if (!playersArray[i]) return;
+
+    var rank = i + 1;
+    ctxScore.fillText('S{rank}th ' + playersArray[i][1].displayName + ' ' + playersArray[i][1].score, 10, 220 + rank * 26);
+  }
 }
 
 function drawMap(gameObj) {
@@ -42202,6 +42232,8 @@ var gameObj = {
   itemRadius: 4,
   airRadius: 5,
   addAirTime: 30,
+  itemPoint: 3,
+  killPoint: 500,
   submarineImageWidth: 42
 };
 
@@ -42454,6 +42486,7 @@ function checkGetItem(playersMap, itemsMap, airMap, flyingMissilesMap) {
 
             gameObj.itemsMap.delete(itemKey);
             playerObj.missilesMany = playerObj.missilesMany > 5 ? 6 : playerObj.missilesMany + 1;
+            playerObj.score += gameObj.itemPoint;
             addItem();
           }
         }
@@ -42499,6 +42532,7 @@ function checkGetItem(playersMap, itemsMap, airMap, flyingMissilesMap) {
             } else {
               playerObj.airTime += gameObj.addAirTime;
             }
+            playerObj.score += gameObj.itemPoint;
             addAir();
           }
         }
@@ -42537,6 +42571,14 @@ function checkGetItem(playersMap, itemsMap, airMap, flyingMissilesMap) {
 
           if (distanceObj.distanceX <= gameObj.submarineImageWidth / 2 + gameObj.missileWidth / 2 && distanceObj.distanceY <= gameObj.submarineImageWidth / 2 + gameObj.missileHeight / 2 && playerObj.playerId !== flyingMissile.emitPlayerId) {
             playerObj.isAlive = false;
+
+            // 倒したユーザーのポイントを加算
+            if (playersMap.has(flyingMissile.emitPlayerSocketId)) {
+              var emitPlayer = playersMap.get(flyingMissile.emitPlayerSocketId);
+              emitPlayer.score += gameObj.killPoint;
+              playersMap.set(flyingMissile.emitPlayerSocketId, emitPlayer);
+            }
+
             flyingMissilesMap.delete(missileId); // ミサイルの削除
           }
         }
