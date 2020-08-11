@@ -1,9 +1,5 @@
 # 潜水艦ゲーム
 
-## 開発メモ
-
-## 遊び方
-
 ## ブランチ戦略
 - 作業ブランチはherokuブランチから切る
   - herokuブランチは常に最新にしておく
@@ -13,8 +9,9 @@
 4. リモートのmasterへのマージ(PR)はよしなに行う（毎回マージしなくても良い） 
 5. リモートのmasterへマージを行ったさいは，ローカルにpullしておく（念の為）
 
-## その他リンク
+## 参考リンク
 - 完成品: https://murmuring-shelf-77610.herokuapp.com
+  - 見本のコード: https://github.com/progedu/submarine-online
 - 潜水艦の画像: https://github.com/progedu/submarine-online/blob/master/public/images/submarine.png 
 - ミサイルの画像: https://github.com/progedu/submarine-online/blob/master/public/images/missile.png
 - 爆発のアニメーション: https://github.com/progedu/submarine-online/blob/master/public/images/bomlist.png

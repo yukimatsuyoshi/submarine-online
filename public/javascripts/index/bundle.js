@@ -27017,6 +27017,8 @@ function ticker() {
   gameObj.ctxScore.clearRect(0, 0, gameObj.scoreCanvasWidth, gameObj.scoreCanvasHeight); // scoreCanvas もまっさら
   drawAirTimer(gameObj.ctxScore, gameObj.myPlayerObj.airTime);
   drawMissiles(gameObj.ctxScore, gameObj.myPlayerObj.missilesMany); // アイテム（赤丸）としてのミサイルの描画
+  drawScore(gameObj.ctxScore, gameObj.myPlayerObj.score);
+  drawRanking(gameObj.ctxScore, gameObj.playersMap);
 
   moveInClient(gameObj.myPlayerObj, gameObj.flyingMissilesMap); // 射出されたミサイルの描画
 
@@ -27101,6 +27103,34 @@ function drawAirTimer(ctxScore, airTime) {
   ctxScore.fillStyle = "rgb(0, 220, 250)";
   ctxScore.font = 'bold 40px Arial';
   ctxScore.fillText(airTime, 110, 50);
+}
+
+function drawScore(ctxScore, score) {
+  ctxScore.fillStyle = "rgb(26, 26, 26)";
+  ctxScore.font = '28px Arial';
+  ctxScore.fillText('score: ' + score, 10, 180);
+}
+
+function drawRanking(ctxScore, playersMap) {
+  var playersArray = [].concat(Array.from(playersMap)); // Arrayをsortした時に，Mapまでsortされないようにする
+  playersArray.sort(function (a, b) {
+    return b[1].score - a[1].score;
+  });
+
+  // ランキング表示の枠
+  ctxScore.fillStyle = "rgb(0, 0, 0)";
+  ctxScore.fillRect(0, 220, gameObj.scoreCanvasWidth, 3);
+
+  // ランキングの表示
+  ctxScore.fillStyle = "rgb(26, 26, 26)";
+  ctxScore.font = '20px Arial';
+
+  for (var i = 0; i < 10; i++) {
+    if (!playersArray[i]) return;
+
+    var rank = i + 1;
+    ctxScore.fillText('S{rank}th ' + playersArray[i][1].displayName + ' ' + playersArray[i][1].score, 10, 220 + rank * 26);
+  }
 }
 
 function drawMap(gameObj) {
@@ -42187,11 +42217,14 @@ var gameObj = {
   playersMap: new Map(),
   itemsMap: new Map(),
   airMap: new Map(),
+  NPCMap: new Map(),
+  addingNPCPlayerNum: 9,
   flyingMissilesMap: new Map(),
   missileAliveFlame: 180,
   missileSpeed: 3,
   missileWidth: 30,
   missileHeight: 30,
+  directions: ['left', 'up', 'down', 'right'],
   fieldWidth: 1000,
   fieldHeight: 1000,
   itemTotal: 15,
@@ -42199,6 +42232,8 @@ var gameObj = {
   itemRadius: 4,
   airRadius: 5,
   addAirTime: 30,
+  itemPoint: 3,
+  killPoint: 500,
   submarineImageWidth: 42
 };
 
@@ -42213,31 +42248,93 @@ function init() {
 init(); // 初期化（初期化はサーバー起動時に行う）
 
 var gameTicker = setInterval(function () {
-  movePlayers(gameObj.playersMap); // 潜水艦の移動
+  NPCMoveDecision(gameObj.NPCMap); // NPCの行動選択
+  var playersAndNPCMap = new Map(Array.from(gameObj.playersMap).concat(Array.from(gameObj.NPCMap)));
+  movePlayers(playersAndNPCMap); // 潜水艦の移動
   moveMissile(gameObj.flyingMissilesMap); // ミサイルの移動
-  checkGetItem(gameObj.playersMap, gameObj.itemsMap, gameObj.airMap, gameObj.flyingMissilesMap); // アイテムのチェック
+  checkGetItem(playersAndNPCMap, gameObj.itemsMap, gameObj.airMap, gameObj.flyingMissilesMap);
+  addNPC();
 }, 33);
 
-function movePlayers(playersMap) {
-  // 潜水艦の移動
+function NPCMoveDecision(NPCMap) {
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
 
   try {
-    for (var _iterator = playersMap[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+    for (var _iterator = NPCMap[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var _ref = _step.value;
 
       var _ref2 = _slicedToArray(_ref, 2);
 
-      var playerId = _ref2[0];
-      var player = _ref2[1];
+      var NPCId = _ref2[0];
+      var NPCObj = _ref2[1];
+
+
+      switch (NPCObj.level) {
+        case 1:
+          if (Math.floor(Math.random() * 60) === 1) {
+            NPCObj.direction = gameObj.directions[Math.floor(Math.random() * gameObj.directions.length)];
+          }
+          if (NPCObj.missilesMany > 0 && Math.floor(Math.random() * 90) === 1) {
+            missileEmit(NPCObj.playerId, NPCObj.direction);
+          }
+          break;
+        case 2:
+          if (Math.floor(Math.random() * 60) === 1) {
+            NPCObj.direction = gameObj.directions[Math.floor(Math.random() * gameObj.directions.length)];
+          }
+          if (NPCObj.missilesMany > 0 && Math.floor(Math.random() * 90) === 1) {
+            missileEmit(NPCObj.playerId, NPCObj.direction);
+          }
+          break;
+        case 3:
+          if (Math.floor(Math.random() * 60) === 1) {
+            NPCObj.direction = gameObj.directions[Math.floor(Math.random() * gameObj.directions.length)];
+          }
+          if (NPCObj.missilesMany > 0 && Math.floor(Math.random() * 90) === 1) {
+            missileEmit(NPCObj.playerId, NPCObj.direction);
+          }
+          break;
+      }
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+}
+
+function movePlayers(playersMap) {
+  // 潜水艦の移動
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = playersMap[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var _ref3 = _step2.value;
+
+      var _ref4 = _slicedToArray(_ref3, 2);
+
+      var playerId = _ref4[0];
+      var player = _ref4[1];
 
       if (player.isAlive === false) {
         if (player.deadCount < 70) {
           player.deadCount += 1;
         } else {
           gameObj.playersMap.delete(playerId);
+          gameObj.NPCMap.delete(playerId);
         }
         continue;
       }
@@ -42270,16 +42367,16 @@ function movePlayers(playersMap) {
       }
     }
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion && _iterator.return) {
-        _iterator.return();
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
       }
     } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
+      if (_didIteratorError2) {
+        throw _iteratorError2;
       }
     }
   }
@@ -42287,18 +42384,18 @@ function movePlayers(playersMap) {
 
 function moveMissile(flyingMissilesMap) {
   // ミサイルの移動
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
 
   try {
-    for (var _iterator2 = flyingMissilesMap[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var _ref3 = _step2.value;
+    for (var _iterator3 = flyingMissilesMap[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var _ref5 = _step3.value;
 
-      var _ref4 = _slicedToArray(_ref3, 2);
+      var _ref6 = _slicedToArray(_ref5, 2);
 
-      var missileId = _ref4[0];
-      var flyingMissile = _ref4[1];
+      var missileId = _ref6[0];
+      var flyingMissile = _ref6[1];
 
       var missile = flyingMissile;
 
@@ -42329,16 +42426,16 @@ function moveMissile(flyingMissilesMap) {
       if (flyingMissile.y > gameObj.fieldHeight) flyingMissile.y -= gameObj.fieldHeight;
     }
   } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-        _iterator2.return();
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
       }
     } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
+      if (_didIteratorError3) {
+        throw _iteratorError3;
       }
     }
   }
@@ -42352,34 +42449,34 @@ function decreaseAir(playerObj) {
 }
 
 function checkGetItem(playersMap, itemsMap, airMap, flyingMissilesMap) {
-  var _iteratorNormalCompletion3 = true;
-  var _didIteratorError3 = false;
-  var _iteratorError3 = undefined;
+  var _iteratorNormalCompletion4 = true;
+  var _didIteratorError4 = false;
+  var _iteratorError4 = undefined;
 
   try {
-    for (var _iterator3 = playersMap[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-      var _ref5 = _step3.value;
+    for (var _iterator4 = playersMap[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+      var _ref7 = _step4.value;
 
-      var _ref6 = _slicedToArray(_ref5, 2);
+      var _ref8 = _slicedToArray(_ref7, 2);
 
-      var hashKey = _ref6[0];
-      var playerObj = _ref6[1];
+      var hashKey = _ref8[0];
+      var playerObj = _ref8[1];
 
       if (playerObj.isAlive === false) continue;
 
       // ミサイル（赤丸）
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
+      var _iteratorNormalCompletion5 = true;
+      var _didIteratorError5 = false;
+      var _iteratorError5 = undefined;
 
       try {
-        for (var _iterator4 = itemsMap[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-          var _ref7 = _step4.value;
+        for (var _iterator5 = itemsMap[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+          var _ref9 = _step5.value;
 
-          var _ref8 = _slicedToArray(_ref7, 2);
+          var _ref10 = _slicedToArray(_ref9, 2);
 
-          var itemKey = _ref8[0];
-          var itemObj = _ref8[1];
+          var itemKey = _ref10[0];
+          var itemObj = _ref10[1];
 
 
           var distanceObj = calculationBetweenTwoPoints(playerObj.x, playerObj.y, itemObj.x, itemObj.y, gameObj.fieldWidth, gameObj.fieldHeight);
@@ -42389,56 +42486,12 @@ function checkGetItem(playersMap, itemsMap, airMap, flyingMissilesMap) {
 
             gameObj.itemsMap.delete(itemKey);
             playerObj.missilesMany = playerObj.missilesMany > 5 ? 6 : playerObj.missilesMany + 1;
+            playerObj.score += gameObj.itemPoint;
             addItem();
           }
         }
 
         // 空気（青丸）
-      } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion4 && _iterator4.return) {
-            _iterator4.return();
-          }
-        } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
-          }
-        }
-      }
-
-      var _iteratorNormalCompletion5 = true;
-      var _didIteratorError5 = false;
-      var _iteratorError5 = undefined;
-
-      try {
-        for (var _iterator5 = airMap[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-          var _ref9 = _step5.value;
-
-          var _ref10 = _slicedToArray(_ref9, 2);
-
-          var airKey = _ref10[0];
-          var airObj = _ref10[1];
-
-
-          var distanceObj = calculationBetweenTwoPoints(playerObj.x, playerObj.y, airObj.x, airObj.y, gameObj.fieldWidth, gameObj.fieldHeight);
-
-          if (distanceObj.distanceX <= gameObj.submarineImageWidth / 2 + gameObj.airRadius && distanceObj.distanceY <= gameObj.submarineImageWidth / 2 + gameObj.airRadius) {
-            // got air!
-
-            gameObj.airMap.delete(airKey);
-            if (playerObj.airTime + gameObj.addAirTime > 99) {
-              playerObj.airTime = 99;
-            } else {
-              playerObj.airTime += gameObj.addAirTime;
-            }
-            addAir();
-          }
-        }
-
-        // 射出されているミサイルの当たり判定
       } catch (err) {
         _didIteratorError5 = true;
         _iteratorError5 = err;
@@ -42459,22 +42512,32 @@ function checkGetItem(playersMap, itemsMap, airMap, flyingMissilesMap) {
       var _iteratorError6 = undefined;
 
       try {
-        for (var _iterator6 = flyingMissilesMap[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+        for (var _iterator6 = airMap[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
           var _ref11 = _step6.value;
 
           var _ref12 = _slicedToArray(_ref11, 2);
 
-          var missileId = _ref12[0];
-          var flyingMissile = _ref12[1];
+          var airKey = _ref12[0];
+          var airObj = _ref12[1];
 
 
-          var distanceObj = calculationBetweenTwoPoints(playerObj.x, playerObj.y, flyingMissile.x, flyingMissile.y, gameObj.fieldWidth, gameObj.fieldHeight);
+          var distanceObj = calculationBetweenTwoPoints(playerObj.x, playerObj.y, airObj.x, airObj.y, gameObj.fieldWidth, gameObj.fieldHeight);
 
-          if (distanceObj.distanceX <= gameObj.submarineImageWidth / 2 + gameObj.missileWidth / 2 && distanceObj.distanceY <= gameObj.submarineImageWidth / 2 + gameObj.missileHeight / 2 && playerObj.playerId !== flyingMissile.emitPlayerId) {
-            playerObj.isAlive = false;
-            flyingMissilesMap.delete(missileId); // ミサイルの削除
+          if (distanceObj.distanceX <= gameObj.submarineImageWidth / 2 + gameObj.airRadius && distanceObj.distanceY <= gameObj.submarineImageWidth / 2 + gameObj.airRadius) {
+            // got air!
+
+            gameObj.airMap.delete(airKey);
+            if (playerObj.airTime + gameObj.addAirTime > 99) {
+              playerObj.airTime = 99;
+            } else {
+              playerObj.airTime += gameObj.addAirTime;
+            }
+            playerObj.score += gameObj.itemPoint;
+            addAir();
           }
         }
+
+        // 射出されているミサイルの当たり判定
       } catch (err) {
         _didIteratorError6 = true;
         _iteratorError6 = err;
@@ -42489,18 +42552,62 @@ function checkGetItem(playersMap, itemsMap, airMap, flyingMissilesMap) {
           }
         }
       }
+
+      var _iteratorNormalCompletion7 = true;
+      var _didIteratorError7 = false;
+      var _iteratorError7 = undefined;
+
+      try {
+        for (var _iterator7 = flyingMissilesMap[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+          var _ref13 = _step7.value;
+
+          var _ref14 = _slicedToArray(_ref13, 2);
+
+          var missileId = _ref14[0];
+          var flyingMissile = _ref14[1];
+
+
+          var distanceObj = calculationBetweenTwoPoints(playerObj.x, playerObj.y, flyingMissile.x, flyingMissile.y, gameObj.fieldWidth, gameObj.fieldHeight);
+
+          if (distanceObj.distanceX <= gameObj.submarineImageWidth / 2 + gameObj.missileWidth / 2 && distanceObj.distanceY <= gameObj.submarineImageWidth / 2 + gameObj.missileHeight / 2 && playerObj.playerId !== flyingMissile.emitPlayerId) {
+            playerObj.isAlive = false;
+
+            // 倒したユーザーのポイントを加算
+            if (playersMap.has(flyingMissile.emitPlayerSocketId)) {
+              var emitPlayer = playersMap.get(flyingMissile.emitPlayerSocketId);
+              emitPlayer.score += gameObj.killPoint;
+              playersMap.set(flyingMissile.emitPlayerSocketId, emitPlayer);
+            }
+
+            flyingMissilesMap.delete(missileId); // ミサイルの削除
+          }
+        }
+      } catch (err) {
+        _didIteratorError7 = true;
+        _iteratorError7 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion7 && _iterator7.return) {
+            _iterator7.return();
+          }
+        } finally {
+          if (_didIteratorError7) {
+            throw _iteratorError7;
+          }
+        }
+      }
     }
   } catch (err) {
-    _didIteratorError3 = true;
-    _iteratorError3 = err;
+    _didIteratorError4 = true;
+    _iteratorError4 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion3 && _iterator3.return) {
-        _iterator3.return();
+      if (!_iteratorNormalCompletion4 && _iterator4.return) {
+        _iterator4.return();
       }
     } finally {
-      if (_didIteratorError3) {
-        throw _iteratorError3;
+      if (_didIteratorError4) {
+        throw _iteratorError4;
       }
     }
   }
@@ -42541,19 +42648,20 @@ function getMapData() {
   var itemsArray = [];
   var airArray = [];
   var flyingMissilesArray = []; // クライアント側のmoveInClientで使用するため
+  var playersAndNPCMap = new Map(Array.from(gameObj.playersMap).concat(Array.from(gameObj.NPCMap)));
 
-  var _iteratorNormalCompletion7 = true;
-  var _didIteratorError7 = false;
-  var _iteratorError7 = undefined;
+  var _iteratorNormalCompletion8 = true;
+  var _didIteratorError8 = false;
+  var _iteratorError8 = undefined;
 
   try {
-    for (var _iterator7 = gameObj.playersMap[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-      var _ref13 = _step7.value;
+    for (var _iterator8 = playersAndNPCMap[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+      var _ref15 = _step8.value;
 
-      var _ref14 = _slicedToArray(_ref13, 2);
+      var _ref16 = _slicedToArray(_ref15, 2);
 
-      var socketId = _ref14[0];
-      var player = _ref14[1];
+      var socketId = _ref16[0];
+      var player = _ref16[1];
 
       var playerDataForSend = [];
 
@@ -42569,41 +42677,6 @@ function getMapData() {
       playerDataForSend.push(player.deadCount);
 
       playersArray.push(playerDataForSend);
-    }
-  } catch (err) {
-    _didIteratorError7 = true;
-    _iteratorError7 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion7 && _iterator7.return) {
-        _iterator7.return();
-      }
-    } finally {
-      if (_didIteratorError7) {
-        throw _iteratorError7;
-      }
-    }
-  }
-
-  var _iteratorNormalCompletion8 = true;
-  var _didIteratorError8 = false;
-  var _iteratorError8 = undefined;
-
-  try {
-    for (var _iterator8 = gameObj.itemsMap[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-      var _ref15 = _step8.value;
-
-      var _ref16 = _slicedToArray(_ref15, 2);
-
-      var id = _ref16[0];
-      var item = _ref16[1];
-
-      var itemDataForSend = [];
-
-      itemDataForSend.push(item.x);
-      itemDataForSend.push(item.y);
-
-      itemsArray.push(itemDataForSend);
     }
   } catch (err) {
     _didIteratorError8 = true;
@@ -42625,20 +42698,20 @@ function getMapData() {
   var _iteratorError9 = undefined;
 
   try {
-    for (var _iterator9 = gameObj.airMap[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+    for (var _iterator9 = gameObj.itemsMap[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
       var _ref17 = _step9.value;
 
       var _ref18 = _slicedToArray(_ref17, 2);
 
-      var _id = _ref18[0];
-      var air = _ref18[1];
+      var id = _ref18[0];
+      var item = _ref18[1];
 
-      var airDataForSend = [];
+      var itemDataForSend = [];
 
-      airDataForSend.push(air.x);
-      airDataForSend.push(air.y);
+      itemDataForSend.push(item.x);
+      itemDataForSend.push(item.y);
 
-      airArray.push(airDataForSend);
+      itemsArray.push(itemDataForSend);
     }
   } catch (err) {
     _didIteratorError9 = true;
@@ -42660,22 +42733,20 @@ function getMapData() {
   var _iteratorError10 = undefined;
 
   try {
-    for (var _iterator10 = gameObj.flyingMissilesMap[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+    for (var _iterator10 = gameObj.airMap[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
       var _ref19 = _step10.value;
 
       var _ref20 = _slicedToArray(_ref19, 2);
 
-      var _id2 = _ref20[0];
-      var flyingMissile = _ref20[1];
+      var _id = _ref20[0];
+      var air = _ref20[1];
 
-      var flyingMissileDataForSend = [];
+      var airDataForSend = [];
 
-      flyingMissileDataForSend.push(flyingMissile.x);
-      flyingMissileDataForSend.push(flyingMissile.y);
-      flyingMissileDataForSend.push(flyingMissile.direction);
-      flyingMissileDataForSend.push(flyingMissile.emitPlayerId);
+      airDataForSend.push(air.x);
+      airDataForSend.push(air.y);
 
-      flyingMissilesArray.push(flyingMissileDataForSend);
+      airArray.push(airDataForSend);
     }
   } catch (err) {
     _didIteratorError10 = true;
@@ -42692,6 +42763,43 @@ function getMapData() {
     }
   }
 
+  var _iteratorNormalCompletion11 = true;
+  var _didIteratorError11 = false;
+  var _iteratorError11 = undefined;
+
+  try {
+    for (var _iterator11 = gameObj.flyingMissilesMap[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+      var _ref21 = _step11.value;
+
+      var _ref22 = _slicedToArray(_ref21, 2);
+
+      var _id2 = _ref22[0];
+      var flyingMissile = _ref22[1];
+
+      var flyingMissileDataForSend = [];
+
+      flyingMissileDataForSend.push(flyingMissile.x);
+      flyingMissileDataForSend.push(flyingMissile.y);
+      flyingMissileDataForSend.push(flyingMissile.direction);
+      flyingMissileDataForSend.push(flyingMissile.emitPlayerId);
+
+      flyingMissilesArray.push(flyingMissileDataForSend);
+    }
+  } catch (err) {
+    _didIteratorError11 = true;
+    _iteratorError11 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion11 && _iterator11.return) {
+        _iterator11.return();
+      }
+    } finally {
+      if (_didIteratorError11) {
+        throw _iteratorError11;
+      }
+    }
+  }
+
   return [playersArray, itemsArray, airArray, flyingMissilesArray];
 }
 
@@ -42701,9 +42809,10 @@ function updatePlayerDirection(socketId, direction) {
 }
 
 function missileEmit(socketId, direction) {
-  if (!gameObj.playersMap.has(socketId)) return;
+  var playersAndNPCMap = new Map(Array.from(gameObj.playersMap).concat(Array.from(gameObj.NPCMap)));
+  if (!playersAndNPCMap.has(socketId)) return;
 
-  var emitPlayerObj = gameObj.playersMap.get(socketId);
+  var emitPlayerObj = playersAndNPCMap.get(socketId);
 
   if (emitPlayerObj.missilesMany <= 0) return;
   if (emitPlayerObj.isAlive === false) return;
@@ -42759,6 +42868,35 @@ function addAir() {
     y: airY
   };
   gameObj.airMap.set(airKey, airObj);
+}
+
+function addNPC() {
+  if (gameObj.playersMap.size + gameObj.NPCMap.size < gameObj.addingNPCPlayerNum) {
+    var addMany = gameObj.addingNPCPlayerNum - gameObj.playersMap.size - gameObj.NPCMap.size;
+
+    for (var i = 0; i < addMany; i++) {
+      var playerX = Math.floor(Math.random() * gameObj.fieldWidth);
+      var playerY = Math.floor(Math.random() * gameObj.fieldHeight);
+      var level = Math.floor(Math.random() * 3) + 1;
+      var id = Math.floor(Math.random() * 100000) + ',' + playerX + ',' + playerY + ',' + level;
+      var playerObj = {
+        x: playerX,
+        y: playerY,
+        isAlive: true,
+        deadCount: 0,
+        direction: 'right',
+        missilesMany: 0,
+        airTime: 99,
+        aliveTime: { 'clock': 0, 'seconds': 0 },
+        score: 0,
+        level: level,
+        displayName: 'NPC:level' + level,
+        thumbUrl: 'NPC',
+        playerId: id
+      };
+      gameObj.NPCMap.set(id, playerObj);
+    }
+  }
 }
 
 function calculationBetweenTwoPoints(pX, pY, oX, oY, gameWidth, gameHeight) {
