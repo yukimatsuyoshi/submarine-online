@@ -27114,7 +27114,7 @@ function drawScore(ctxScore, score) {
 function drawRanking(ctxScore, playersMap) {
   var playersArray = [].concat(Array.from(playersMap)); // Arrayをsortした時に，Mapまでsortされないようにする
   playersArray.sort(function (a, b) {
-    return b[l].score - a[l].score;
+    return b[1].score - a[1].score;
   });
 
   // ランキング表示の枠
