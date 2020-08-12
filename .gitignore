@@ -1,2 +1,2 @@
 node_modules/
-config.js
+#config.js  herokuで公開するために，gitにpush(herokuのmatserにpushする時だけ)

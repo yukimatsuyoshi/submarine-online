@@ -9,6 +9,9 @@
 1. 作業完了後，作業ブランチからherokuブランチにPRを出してマージ
 2. ローカルのherokuブランチにpull
 3. ローカルのherokuブランチから，herokuのmasterに変更分をpush
+   - git push heroku heroku:master
+   - この際，config.jsをgitignoreしないようにする
+   - 自分のgitにpushする際はignoreする（セキュリティのため）
 4. リモートのmasterへのマージ(PR)はよしなに行う（毎回マージしなくても良い） 
 5. リモートのmasterへマージを行ったさいは，ローカルにpullしておく（念の為）
 
