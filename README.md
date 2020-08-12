@@ -1,5 +1,11 @@
 # 潜水艦ゲーム
 
+# 開発メモ
+- herokuの環境変数としてherokuのURLとAPI Keyを登録する方法
+  - heroku config:set HEROKU_URL='https://intense-harbor-94892.herokuapp.com/'
+  - heroku config:set TWITTER_CONSUMER_KEY='xxxxx'
+  - heroku config:set TWITTER_CONSUMER_SECLET='xxxxx'
+
 # アクセス
 - heroku URL: https://intense-harbor-94892.herokuapp.com/ 
 
@@ -9,6 +15,7 @@
 1. 作業完了後，作業ブランチからherokuブランチにPRを出してマージ
 2. ローカルのherokuブランチにpull
 3. ローカルのherokuブランチから，herokuのmasterに変更分をpush
+   - herokuのURL(callback)やアクセスキーなどはherokuの環境変数に登録しておく
    - git push heroku heroku:master
    - この際，config.jsをgitignoreしないようにする
    - 自分のgitにpushする際はignoreする（セキュリティのため）
