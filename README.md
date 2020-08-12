@@ -1,5 +1,8 @@
 # 潜水艦ゲーム
 
+# アクセス
+- heroku URL: https://intense-harbor-94892.herokuapp.com/ 
+
 ## ブランチ戦略
 - 作業ブランチはherokuブランチから切る
   - herokuブランチは常に最新にしておく
