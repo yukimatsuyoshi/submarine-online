@@ -27129,7 +27129,7 @@ function drawRanking(ctxScore, playersMap) {
     if (!playersArray[i]) return;
 
     var rank = i + 1;
-    ctxScore.fillText('S{rank}th ' + playersArray[i][1].displayName + ' ' + playersArray[i][1].score, 10, 220 + rank * 26);
+    ctxScore.fillText(rank + 'th ' + playersArray[i][1].displayName + ' ' + playersArray[i][1].score, 10, 220 + rank * 26);
   }
 }
 
