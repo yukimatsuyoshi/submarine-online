@@ -1,3 +1,2 @@
 node_modules/
 config.js  
-#herokuで公開する際は，config.jsをgitにpushしないようにする(herokuのmatserにpushする時だけ)

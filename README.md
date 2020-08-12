@@ -5,6 +5,9 @@
   - heroku config:set HEROKU_URL='https://intense-harbor-94892.herokuapp.com/'
   - heroku config:set TWITTER_CONSUMER_KEY='xxxxx'
   - heroku config:set TWITTER_CONSUMER_SECLET='xxxxx'
+- herokuのmasterにpushする際にconfig.jsをignoreしないようにしたあと，自分のgithubにpushする際にignoreしようとすると，キャッシュが残っているせいでignoreされない --> 以下コマンドでキャッシュを削除しよう
+  - git rm -r --cached . //ファイル全体キャッシュ削除
+  - git rm -r --cached [ファイル名]  //ファイル指定してキャッシュ削除
 
 # アクセス
 - heroku URL: https://intense-harbor-94892.herokuapp.com/ 
